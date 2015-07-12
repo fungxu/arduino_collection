@@ -8,7 +8,7 @@ void setup()
 {
   Serial.begin(9600); 
   Serial.println("HT16K33 test");
-  matrix.begin(0x70);  // pass in the address  
+  matrix.begin(0x70);  // pass in the address  z
 }
  
 void loop()
