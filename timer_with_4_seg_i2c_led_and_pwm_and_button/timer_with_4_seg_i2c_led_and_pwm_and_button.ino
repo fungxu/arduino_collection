@@ -9,6 +9,7 @@ int second=0;
 boolean drawcolon = true;
 boolean counting_flag = false;
 boolean reading_flag = true;
+const int BTN=2;
 
 void setup() {
   Serial.begin(9600);
@@ -17,23 +18,25 @@ void setup() {
   setupInterrupt();  
   read_pwm();
   pinMode(13, OUTPUT);
+  pinMode(BTN,INPUT);
 }
 
 void loop(){
   display_led();
 
   // if button is clicked;
-  if ( read_button() ) {
-      show_indicator(HIGH);
-      delay(2000);
-      display_led();
-      // if button is clicked for 2 seconds
-      if(read_button()){
-        read_pwm();
+  int btn_value = read_button();
+  if ( btn_value > 0 ) {
+
+      // if button is clicked for 2 seconds or above
+      if ( btn_value > 1){
         counting_flag = false;
         second = 0;
         reading_flag = true;
-      }else{
+      }
+
+      // click once
+      if ( btn_value == 1) {
         show_indicator(LOW);
         counting_flag = ! counting_flag;
         reading_flag = false;
@@ -41,9 +44,10 @@ void loop(){
   }
 
   if ( reading_flag ) {
+    show_indicator(HIGH);
     read_pwm();
   }
-  delay(1000);
+  delay(500);
 }
 
 //*************************
@@ -74,10 +78,33 @@ void read_pwm(){
     minute = n/17/5*5;  
 }
 
-boolean read_button(){
-    int n = analogRead(A1);
-    Serial.println(n);
-    return n>1000;
+int read_button(){
+    if( digitalRead(BTN)==HIGH ){
+        delay(300);
+        show_indicator(HIGH);
+        if(digitalRead(BTN)==HIGH){
+            int hold_time = 0;
+            boolean ind_flag = false;
+            while(digitalRead(BTN)==HIGH){
+              delay(200);
+              hold_time++;
+              Serial.println(hold_time);
+              if(hold_time > 10){
+                hold_time = 10;
+                show_indicator(ind_flag?HIGH:LOW);
+                ind_flag = ! ind_flag;
+              }
+            }
+            Serial.println(hold_time);
+            hold_time = hold_time / 10;
+            show_indicator(LOW);
+            Serial.print("Button value");
+            Serial.println(hold_time);
+            return hold_time +1;
+        }
+    }
+
+    return 0;
 }
 
 boolean show_indicator(boolean flag){
