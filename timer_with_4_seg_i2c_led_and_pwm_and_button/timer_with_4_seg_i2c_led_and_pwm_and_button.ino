@@ -22,32 +22,32 @@ void setup() {
 }
 
 void loop(){
-  display_led();
 
   // if button is clicked;
   int btn_value = read_button();
   if ( btn_value > 0 ) {
 
       // if button is clicked for 2 seconds or above
-      if ( btn_value > 1){
+      if ( btn_value == 2 ){
         counting_flag = false;
         second = 0;
         reading_flag = true;
       }
 
       // click once
-      if ( btn_value == 1) {
+      if ( btn_value == 1 ) {
         show_indicator(LOW);
         counting_flag = ! counting_flag;
         reading_flag = false;
       }
   }
-
+  
   if ( reading_flag ) {
     show_indicator(HIGH);
     read_pwm();
   }
-  delay(500);
+  display_led();
+  delay(100);
 }
 
 //*************************
@@ -61,15 +61,14 @@ void tick(){
 
 void display_led(){
    int distr = minute*100+second;
-   Serial.print("Timer is ");
-   Serial.println(distr);
+   //Serial.print("Timer is ");
+   //Serial.println(distr);
    matrix.print(distr, DEC);
-   if ( reading_flag ) {
+   if ( reading_flag || ! counting_flag ) {
       matrix.drawColon(true);
    }else{
       matrix.drawColon(drawcolon);
    }
-   drawcolon = !drawcolon;
    matrix.writeDisplay();
 }
 
@@ -80,27 +79,23 @@ void read_pwm(){
 
 int read_button(){
     if( digitalRead(BTN)==HIGH ){
-        delay(300);
+        delay(10);
         show_indicator(HIGH);
         if(digitalRead(BTN)==HIGH){
             int hold_time = 0;
             boolean ind_flag = false;
             while(digitalRead(BTN)==HIGH){
-              delay(200);
-              hold_time++;
-              Serial.println(hold_time);
-              if(hold_time > 10){
-                hold_time = 10;
-                show_indicator(ind_flag?HIGH:LOW);
-                ind_flag = ! ind_flag;
+              delay(10);
+              if(hold_time < 200){
+                hold_time++;
+              }else{ 
+                // hold on 2 seconds
+                show_indicator(LOW);
               }
             }
-            Serial.println(hold_time);
-            hold_time = hold_time / 10;
             show_indicator(LOW);
-            Serial.print("Button value");
-            Serial.println(hold_time);
-            return hold_time +1;
+            Serial.print(hold_time);
+            return hold_time==200 ? 2 : 1;
         }
     }
 
@@ -163,7 +158,13 @@ ISR(TIMER2_OVF_vect) {
   {
     if ( ! counting_flag ) return;
     time--;
+
+    if( time == 500){
+      drawcolon = true;
+    }
+    
     if(time==0){
+      drawcolon = false;
       time=1000;
       tick();
     }
