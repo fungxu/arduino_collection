@@ -18,8 +18,8 @@ void loop(){
   //digitalWrite(blue,0);
 
   analogWrite(green,brightness);
-  analogWrite(red,255-brightness);
-  analogWrite(blue,128-brightness);
+  analogWrite(red,brightness);
+  analogWrite(blue,brightness);
 
   brightness += fadeAmount;
 

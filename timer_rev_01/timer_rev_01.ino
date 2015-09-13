@@ -19,10 +19,11 @@ const int GREEN  = 5;
 
 void setup() {
   Serial.begin(9600);
-  Serial.println("HT16K33 test");
+  Serial.println("Made by Fung.Xu");
   matrix.begin(0x70);  // pass in the address
   setupInterrupt();  
   read_pwm();
+  
   pinMode(LED, OUTPUT);
   pinMode(BUZZER,OUTPUT);
   pinMode(BTN,INPUT);
@@ -81,12 +82,12 @@ int fadeAmount = 1;
 
 void display_breath_sign(){
   analogWrite(GREEN,brightness);
-  //analogWrite(RED,brightness);
-  //analogWrite(BLUE,brightness);
+  analogWrite(RED,brightness);
+  analogWrite(BLUE,brightness);
 
   brightness += fadeAmount;
 
-  if(brightness == 0 || brightness > 10){
+  if(brightness == 0 || brightness >= 10){
     fadeAmount = -fadeAmount;
   }
 }
@@ -98,7 +99,7 @@ void show_alert_sign(){
     }
 
     if( color % 3 == 1 ){
-      digitalWrite(RED,HIGH);
+      digitalWrite(RED,100);
     }
 
     if ( color % 3 == 2 ){
