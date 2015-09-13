@@ -3,6 +3,7 @@
 1. 最小接线方式, CH_PD 口需要接 VCC 可以开机
 
   接 usb 的图![p1](https://raw.githubusercontent.com/fungxu/esp8266-co-uk/master/images/esp-01-connections.png)
+
 2. GPIO 口与代码的对应关系
 | GPIO pin | IO index |
 | -------- | -------- |
@@ -25,31 +26,26 @@
 | GPIO16   | 0        |
 
 3. 有两个口开机时要注意
-
 | GPIO PIN | 电平 | 作用 |
 |----------|-----|------|
 | GPIO15   | 高  | 从SD卡启动 |
 | GPIO00   | 低  | 写入程序 |
 
-
 4. 使用IO口时需要初始化
-
 | Mode      | Reference   | Description                                                                     |
 | --------- | ----------- | ------------------------------------------------------------------------------- |
 | Input     | gpio.INPUT  | Poll a pin to get its value.                                                    |
 | Output    | gpio.OUTPUT | Assign a pin its value.                                                         |
 | Interrupt | gpio.INT    | Same as input + set a callback to be executed every time a pin's value changes. |
+如：  
 
-如：
-```lua
+``` lua
 gpio.mode(3, gpio.OUTPUT)
 gpio.write(3, gpio.HIGH)
 
 gpio.mode(4, gpio.OUTUT)
 gpio.write(4, gpio.LOW)
-```
 
-```lua
 gpio.mode(4, gpio.INPUT)
 local pinValue = gpio.read(4)
 
@@ -58,7 +54,9 @@ if pinValue == gpio.LOW then
 else
 	print 'GPIO2 is high'
 end
+
 ```
+
 使用中断模式,这也是充分利 lua 接语言特点
 
 ```lua
@@ -90,7 +88,7 @@ local pin = 4	--> GPIO2
 
 function debounce (func)
 	local last = 0
-	local delay = 5000
+	local delay = 5000　--- 5000 代表 us 即 5ms
 
 	return function (...)
 		local now = tmr.now()
@@ -109,10 +107,37 @@ gpio.mode(pin, gpio.INT)
 gpio.trig(pin, 'both', debounce(onChange))
 ```
 
-5000 代表 us 即 5ms
 
-5. 为了在开机时进行重试，重试时显示进度，失败后停止，需要在
+5. 为了在开机时进行重试，重试时显示进度，失败后停止，需要在init.lua 中写：
 
+```lua
+if true then  --change to if true
+	print("set up wifi mode")
+	wifi.setmode(wifi.STATION)
+	--please config ssid and password according to settings of your wireless router.
+	wifi.sta.config("ssid","password")
+	wifi.sta.connect()
+	cnt = 0
+	tmr.alarm(1, 1000, 1, function() 
+	    if (wifi.sta.getip() == nil) and (cnt < 20) then 
+	    	print("IP unavaiable, Waiting...")
+	    	cnt = cnt + 1 
+	    else 
+	    	tmr.stop(1)
+	    	if (cnt < 20) then print("Config done, IP is "..wifi.sta.getip())
+	    	dofile("dht11.lua")
+	    	else print("Wifi setup time more than 20s, Please verify wifi.sta.config() function. Then re-download the file.")
+	    	end
+	    end 
+	 end)
+else
+	print("\n")
+	print("Please edit 'init.lua' first:")
+	print("Step 1: Modify wifi.sta.config() function in line 5 according settings of your wireless router.")
+	print("Step 2: Change the 'if false' statement in line 1 to 'if true'.")
+end
+
+```
 
 6. i2c oled 的初始化
 
